@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id" class="dark">
 <head>
   <meta charset="UTF-8" />
@@ -401,7 +401,7 @@ function addModelToProvider(pKey) {
     if (!globalConfig.opencode.provider[pKey].models) {
       globalConfig.opencode.provider[pKey].models = {};
     }
-    const isVision = /gemini|gpt-5|vision|flash|kimi|muse|grok|minimax|4o|luna|sol/i.test(tName); globalConfig.opencode.provider[pKey].models[tName] = { name: tName, modalities: isVision ? { input: ["text", "image"], output: ["text"] } : { input: ["text"], output: ["text"] } };
+    const isVision = /gemini|gpt-5|vision|flash|kimi|muse|grok|minimax|4o|luna|sol/i.test(tName); globalConfig.opencode.provider[pKey].models[tName] = { name: tName, modalities: isVision ? { input: ["text", "image"], output: ["text"] } : { input: ["text"], output: ["text"] }, ...(isVision ? { attachment: true } : {}) };
     updateUI();
     showToast(`Model ${tName} ditambahkan ke ${pKey}!`);
   }
