@@ -1,0 +1,554 @@
+﻿<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenCode Model & Router Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: {
+              900: '#0f172a',
+              800: '#1e293b',
+              700: '#334155'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-dark-900 text-slate-100 min-h-screen flex flex-col antialiased">
+  <header class="sticky top-0 z-40 bg-dark-900/90 backdrop-blur-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">OpenCode Manager</h1>
+          <p class="text-xs text-slate-400">Model & Router Switcher</p>
+        </div>
+      </div>
+      <nav class="flex items-center space-x-1 bg-dark-800 p-1 rounded-lg border border-slate-700/50">
+        <button onclick="setTab('quick')" id="tab-btn-quick" class="tab-btn px-3 py-1.5 rounded-md text-sm font-medium transition flex items-center space-x-1.5">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>Quick Switch</span>
+        </button>
+        <button onclick="setTab('agents')" id="tab-btn-agents" class="tab-btn px-3 py-1.5 rounded-md text-sm font-medium transition flex items-center space-x-1.5">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+          <span>Agent Matrix</span>
+        </button>
+        <button onclick="setTab('providers')" id="tab-btn-providers" class="tab-btn px-3 py-1.5 rounded-md text-sm font-medium transition flex items-center space-x-1.5">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0 3-4.03 3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+          <span>Routers & Models</span>
+        </button>
+        <button onclick="setTab('raw')" id="tab-btn-raw" class="tab-btn px-3 py-1.5 rounded-md text-sm font-medium transition flex items-center space-x-1.5">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Raw & Backups</span>
+        </button>
+      </nav>
+
+      <div class="flex items-center space-x-2">
+        <button onclick="loadConfig()" class="px-3 py-2 rounded-lg bg-dark-800 hover:bg-slate-700 text-slate-300 text-sm font-medium border border-slate-700 flex items-center space-x-1.5">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span class="hidden sm:inline">Reload</span>
+        </button>
+        <button onclick="saveAll()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 flex items-center space-x-1.5">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v12a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-14 0V4a2 2 0 012-2h4a2 2 0 012 2v3m2 4h10"/></svg>
+          <span>Simpan</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+  <div id="tab-quick" class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div class="p-5 rounded-xl bg-dark-800 border border-slate-700/60">
+        <p class="text-xs font-semibold text-slate-400 uppercase">Main Model (OpenCode)</p>
+        <p id="status-main-model" class="mt-2 text-lg font-bold text-indigo-400 mono truncate">-</p>
+      </div>
+      <div class="p-5 rounded-xl bg-dark-800 border border-slate-700/60">
+        <p class="text-xs font-semibold text-slate-400 uppercase">Active Preset (Oh-My)</p>
+        <p id="status-active-preset" class="mt-2 text-lg font-bold text-emerald-400 mono truncate">-</p>
+      </div>
+      <div class="p-5 rounded-xl bg-dark-800 border border-slate-700/60">
+        <p class="text-xs font-semibold text-slate-400 uppercase">Terdaftar Router</p>
+        <p id="status-providers" class="mt-2 text-lg font-bold text-sky-400 mono truncate">-</p>
+      </div>
+    </div>
+    <div class="p-6 rounded-2xl bg-gradient-to-r from-indigo-950/60 to-purple-950/60 border border-indigo-500/30">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center space-x-2"><span>One-Click Mass Router Switcher</span></h2>
+          <p class="text-sm text-slate-300 mt-1">Alihkan SEMUA model agent & main model ke router tujuan sekaligus.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <select id="select-mass-router" class="bg-dark-900 border border-indigo-500/50 text-white rounded-lg px-4 py-2.5 text-sm font-semibold"></select>
+          <button onclick="executeMassSwitch()" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-semibold text-sm shadow-lg transition">Switch Semua!</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="p-6 rounded-2xl bg-dark-800 border border-slate-700/60">
+        <h3 class="text-lg font-bold text-white">OpenCode Core Model</h3>
+        <p class="text-xs text-slate-400 mt-1">opencode.json</p>
+        <div class="mt-5 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-1.5">Default Main Model</label>
+            <select id="select-core-model" class="w-full bg-dark-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm font-mono text-white"></select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-1.5">Core Explorer Subagent Model</label>
+            <select id="select-core-explorer-model" class="w-full bg-dark-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm font-mono text-white"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-6 rounded-2xl bg-dark-800 border border-slate-700/60">
+        <h3 class="text-lg font-bold text-white">Oh-My-OpenCode Slim Preset</h3>
+        <p class="text-xs text-slate-400 mt-1">oh-my-opencode-slim.json</p>
+        <div class="mt-5 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-1.5">Active Preset</label>
+            <select id="select-active-preset" onchange="onPresetChanged()" class="w-full bg-dark-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm font-mono text-white"></select>
+          </div>
+          <div class="flex items-center space-x-2">
+            <input type="text" id="input-new-preset" placeholder="Buat preset baru (contoh: naelvi-minimax)" class="flex-1 bg-dark-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-white" />
+            <button onclick="createNewPreset()" class="px-3.5 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium">+ Buat</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-agents" class="hidden space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-bold text-white">Oh-My-OpenCode Agent Matrix</h2>
+        <p class="text-sm text-slate-400 mt-1">Atur model dan variant (high/medium/low) untuk setiap subagent.</p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <span class="text-xs text-slate-400">Editing Preset:</span>
+        <select id="select-agent-preset" onchange="renderAgentCards()" class="bg-dark-800 border border-slate-700 text-white rounded-lg px-3 py-1.5 text-sm font-semibold"></select>
+      </div>
+    </div>
+    <div id="agent-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"></div>
+  </div>
+
+  <div id="tab-providers" class="hidden space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-bold text-white">Router & Provider Config</h2>
+        <p class="text-sm text-slate-400 mt-1">Kelola Base URL, API Key, dan daftar model untuk setiap router.</p>
+      </div>
+      <button onclick="addNewProvider()" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold">+ Tambah Router Baru</button>
+    </div>
+    <div id="provider-container" class="space-y-6"></div>
+  </div>
+
+  <div id="tab-raw" class="hidden space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 space-y-6">
+        <div class="p-6 rounded-2xl bg-dark-800 border border-slate-700/60">
+          <h3 class="text-lg font-bold text-white">opencode.json</h3>
+          <textarea id="raw-opencode" rows="10" class="w-full mt-3 p-3.5 bg-dark-900 border border-slate-700 rounded-lg text-xs mono text-slate-200 custom-scroll"></textarea>
+        </div>
+        <div class="p-6 rounded-2xl bg-dark-800 border border-slate-700/60">
+          <h3 class="text-lg font-bold text-white">oh-my-opencode-slim.json</h3>
+          <textarea id="raw-ohmy" rows="12" class="w-full mt-3 p-3.5 bg-dark-900 border border-slate-700 rounded-lg text-xs mono text-slate-200 custom-scroll"></textarea>
+        </div>
+      </div>
+      <div class="p-6 rounded-2xl bg-dark-800 border border-slate-700/60 h-fit">
+        <h3 class="text-lg font-bold text-white">Auto Backups</h3>
+        <p class="text-xs text-slate-400 mt-1">Setiap save otomatis dibuatkan snapshot.</p>
+        <div id="backup-list" class="mt-4 space-y-2 max-h-96 overflow-y-auto custom-scroll"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast" class="fixed bottom-6 right-6 px-5 py-3.5 rounded-xl bg-dark-800 border border-indigo-500 text-white shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-3 z-50">
+  <span id="toast-icon"></span>
+  <span id="toast-msg" class="text-sm font-medium">Pesan</span>
+</div>
+
+<script>
+let globalConfig = null;
+let currentTab = 'quick';
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast-icon').innerHTML = isError 
+    ? '<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' 
+    : '<svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+  t.classList.remove('translate-y-20', 'opacity-0');
+  t.classList.add('translate-y-0', 'opacity-100');
+  setTimeout(() => {
+    t.classList.remove('translate-y-0', 'opacity-100');
+    t.classList.add('translate-y-20', 'opacity-0');
+  }, 3000);
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  ['quick', 'agents', 'providers', 'raw'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+    const btn = document.getElementById(`tab-btn-${t}`);
+    if (t === tab) {
+      btn.classList.add('bg-indigo-600', 'text-white');
+      btn.classList.remove('text-slate-400', 'hover:text-white');
+    } else {
+      btn.classList.remove('bg-indigo-600', 'text-white');
+      btn.classList.add('text-slate-400', 'hover:text-white');
+    }
+  });
+}
+
+async function loadConfig() {
+  try {
+    const res = await fetch('/api/config');
+    globalConfig = await res.json();
+    updateUI();
+  } catch (err) {
+    showToast('Gagal memuat konfig: ' + err.message, true);
+  }
+}
+
+function updateUI() {
+  if (!globalConfig) return;
+  const { opencode, ohMy, providers, models } = globalConfig;
+
+  document.getElementById('status-main-model').textContent = opencode.model || '(Not set)';
+  document.getElementById('status-active-preset').textContent = ohMy.preset || '(Not set)';
+  document.getElementById('status-providers').textContent = providers.join(', ') || '(None)';
+
+  const massSel = document.getElementById('select-mass-router');
+  massSel.innerHTML = providers.map(p => `<option value="${p}">${p}</option>`).join('');
+
+  const modelOpts = models.map(m => `<option value="${m.id}">${m.id}</option>`).join('');
+  const coreModelSel = document.getElementById('select-core-model');
+  coreModelSel.innerHTML = modelOpts;
+  coreModelSel.value = opencode.model || '';
+
+  const coreExplorerSel = document.getElementById('select-core-explorer-model');
+  coreExplorerSel.innerHTML = modelOpts;
+  if (opencode.agent && opencode.agent.explorer) {
+    coreExplorerSel.value = opencode.agent.explorer.model || '';
+  }
+
+  const presetKeys = Object.keys(ohMy.presets || {});
+  const presetOpts = presetKeys.map(p => `<option value="${p}">${p}</option>`).join('');
+  const actPresetSel = document.getElementById('select-active-preset');
+  actPresetSel.innerHTML = presetOpts;
+  actPresetSel.value = ohMy.preset || '';
+
+  const agentPresetSel = document.getElementById('select-agent-preset');
+  agentPresetSel.innerHTML = presetOpts;
+  agentPresetSel.value = ohMy.preset || presetKeys[0] || '';
+
+  renderAgentCards();
+  renderProviders();
+  renderRawJson();
+  renderBackups();
+}
+
+function renderAgentCards() {
+  if (!globalConfig) return;
+  const { ohMy, models } = globalConfig;
+  const selPreset = document.getElementById('select-agent-preset').value;
+  const agentObj = (ohMy.presets && ohMy.presets[selPreset]) || ohMy.agents || {};
+  const grid = document.getElementById('agent-grid');
+  grid.innerHTML = '';
+  const agentNames = ['orchestrator', 'oracle', 'council', 'librarian', 'explorer', 'designer', 'fixer', 'observer'];
+  const allAgentKeys = Array.from(new Set([...agentNames, ...Object.keys(agentObj)]));
+
+  allAgentKeys.forEach(aKey => {
+    const agentInfo = agentObj[aKey] || { model: '', variant: 'high' };
+    const curModel = agentInfo.model || '';
+    const curVariant = agentInfo.variant || 'high';
+    const card = document.createElement('div');
+    card.className = 'p-5 rounded-2xl bg-dark-800 border border-slate-700/60 flex flex-col justify-between space-y-4';
+    card.innerHTML = `
+      <div>
+        <div class="flex items-center justify-between">
+          <h4 class="text-base font-bold text-white capitalize">${aKey}</h4>
+          <span class="px-2 py-0.5 text-xs rounded-full font-mono ${curVariant === 'high' ? 'bg-emerald-500/20 text-emerald-400' : curVariant === 'medium' ? 'bg-amber-500/20 text-amber-400' : 'bg-sky-500/20 text-sky-400'}">${curVariant}</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">Subagent OH-MY Slim</p>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Model</label>
+          <select onchange="updateAgentModel('${aKey}', this.value)" class="w-full bg-dark-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white">
+            ${models.map(m => `<option value="${m.id}" ${m.id === curModel ? 'selected' : ''}>${m.id}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Variant</label>
+          <select onchange="updateAgentVariant('${aKey}', this.value)" class="w-full bg-dark-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            <option value="high" ${curVariant === 'high' ? 'selected' : ''}>High (Deep Reasoning)</option>
+            <option value="medium" ${curVariant === 'medium' ? 'selected' : ''}>Medium (Balanced)</option>
+            <option value="low" ${curVariant === 'low' ? 'selected' : ''}>Low (Fast & Light)</option>
+          </select>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function updateAgentModel(aKey, newModel) {
+  const selPreset = document.getElementById('select-agent-preset').value;
+  if (globalConfig.ohMy.presets && globalConfig.ohMy.presets[selPreset]) {
+    if (!globalConfig.ohMy.presets[selPreset][aKey]) globalConfig.ohMy.presets[selPreset][aKey] = {};
+    globalConfig.ohMy.presets[selPreset][aKey].model = newModel;
+  }
+  if (globalConfig.ohMy.agents && globalConfig.ohMy.agents[aKey]) {
+    globalConfig.ohMy.agents[aKey].model = newModel;
+  }
+  renderRawJson();
+}
+
+function updateAgentVariant(aKey, newVariant) {
+  const selPreset = document.getElementById('select-agent-preset').value;
+  if (globalConfig.ohMy.presets && globalConfig.ohMy.presets[selPreset]) {
+    if (!globalConfig.ohMy.presets[selPreset][aKey]) globalConfig.ohMy.presets[selPreset][aKey] = {};
+    globalConfig.ohMy.presets[selPreset][aKey].variant = newVariant;
+  }
+  if (globalConfig.ohMy.agents && globalConfig.ohMy.agents[aKey]) {
+    globalConfig.ohMy.agents[aKey].variant = newVariant;
+  }
+  renderAgentCards();
+  renderRawJson();
+}
+
+function renderProviders() {
+  if (!globalConfig) return;
+  const providers = globalConfig.opencode.provider || {};
+  const container = document.getElementById('provider-container');
+  container.innerHTML = '';
+
+  Object.entries(providers).forEach(([pKey, pVal]) => {
+    const opts = pVal.options || {};
+    const models = pVal.models || {};
+    const card = document.createElement('div');
+    card.className = 'p-6 rounded-2xl bg-dark-800 border border-slate-700/60 space-y-5';
+    card.innerHTML = `
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+          <h3 class="text-lg font-bold text-white">${pKey}</h3>
+          <span class="text-xs text-slate-400 mono">(${pVal.npm || 'OpenAI-Compatible'})</span>
+        </div>
+        <button onclick="addModelToProvider('${pKey}')" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs font-medium">+ Tambah Model</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Base URL</label>
+          <input type="text" value="${opts.baseURL || ''}" onchange="updateProviderOpt('${pKey}', 'baseURL', this.value)" class="w-full bg-dark-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-white" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">API Key</label>
+          <input type="password" value="${opts.apiKey || ''}" onchange="updateProviderOpt('${pKey}', 'apiKey', this.value)" class="w-full bg-dark-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-white" />
+        </div>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-slate-300 mb-2">Daftar Model Terdaftar:</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          ${Object.keys(models).map(mK => `
+            <div class="p-2.5 rounded-lg bg-dark-900 border border-slate-700/50 flex items-center justify-between">
+              <span class="text-xs font-mono text-slate-200 truncate" title="${mK}">${mK}</span>
+              <button onclick="deleteModel('${pKey}', '${mK}')" class="text-slate-500 hover:text-rose-400 p-1 rounded" title="Hapus">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function updateProviderOpt(pKey, field, val) {
+  if (!globalConfig.opencode.provider[pKey].options) {
+    globalConfig.opencode.provider[pKey].options = {};
+  }
+  globalConfig.opencode.provider[pKey].options[field] = val;
+  renderRawJson();
+}
+
+function addModelToProvider(pKey) {
+  const mName = prompt(`Masukkan id model untuk ${pKey} (contoh: cmc/deepseek/deepseek-v4-pro):`);
+  if (mName && mName.trim()) {
+    const tName = mName.trim();
+    if (!globalConfig.opencode.provider[pKey].models) {
+      globalConfig.opencode.provider[pKey].models = {};
+    }
+    const isVision = /gemini|gpt-5|vision|flash|kimi|muse|grok|minimax|4o|luna|sol/i.test(tName); globalConfig.opencode.provider[pKey].models[tName] = { name: tName, modalities: isVision ? { input: ["text", "image"], output: ["text"] } : { input: ["text"], output: ["text"] } };
+    updateUI();
+    showToast(`Model ${tName} ditambahkan ke ${pKey}!`);
+  }
+}
+
+function deleteModel(pKey, mKey) {
+  if (confirm(`Hapus model ${mKey} dari ${pKey}?`)) {
+    delete globalConfig.opencode.provider[pKey].models[mKey];
+    updateUI();
+  }
+}
+
+function addNewProvider() {
+  const pName = prompt('Masukkan nama router / provider baru (contoh: myrouter):');
+  if (pName && pName.trim()) {
+    const tP = pName.trim();
+    if (!globalConfig.opencode.provider) globalConfig.opencode.provider = {};
+    globalConfig.opencode.provider[tP] = {
+      npm: '@ai-sdk/openai-compatible',
+      options: { baseURL: 'http://127.0.0.1:8080/v1', apiKey: 'sk-xxx' },
+      models: {}
+    };
+    globalConfig.providers = Object.keys(globalConfig.opencode.provider);
+    updateUI();
+    showToast(`Router ${tP} berhasil ditambahkan!`);
+  }
+}
+
+async function executeMassSwitch() {
+  const targetRouter = document.getElementById('select-mass-router').value;
+  if (!targetRouter) return showToast('Pilih router tujuan terlebih dahulu', true);
+  try {
+    const res = await fetch('/api/switch-router', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetRouter, scope: 'all' })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message);
+      await loadConfig();
+    } else {
+      showToast(data.error, true);
+    }
+  } catch (err) {
+    showToast('Error switch router: ' + err.message, true);
+  }
+}
+
+function onPresetChanged() {
+  const p = document.getElementById('select-active-preset').value;
+  globalConfig.ohMy.preset = p;
+  document.getElementById('select-agent-preset').value = p;
+  renderAgentCards();
+  renderRawJson();
+}
+
+function createNewPreset() {
+  const inp = document.getElementById('input-new-preset');
+  const name = inp.value.trim();
+  if (!name) return showToast('Masukkan nama preset', true);
+  if (!globalConfig.ohMy.presets) globalConfig.ohMy.presets = {};
+  const basePreset = globalConfig.ohMy.presets[globalConfig.ohMy.preset] || globalConfig.ohMy.agents || {};
+  globalConfig.ohMy.presets[name] = JSON.parse(JSON.stringify(basePreset));
+  globalConfig.ohMy.preset = name;
+  inp.value = '';
+  updateUI();
+  showToast(`Preset "${name}" berhasil dibuat!`);
+}
+
+async function saveAll() {
+  try {
+    globalConfig.opencode.model = document.getElementById('select-core-model').value;
+    if (globalConfig.opencode.agent && globalConfig.opencode.agent.explorer) {
+      globalConfig.opencode.agent.explorer.model = document.getElementById('select-core-explorer-model').value;
+    }
+    globalConfig.ohMy.preset = document.getElementById('select-active-preset').value;
+
+    if (currentTab === 'raw') {
+      globalConfig.opencode = JSON.parse(document.getElementById('raw-opencode').value);
+      globalConfig.ohMy = JSON.parse(document.getElementById('raw-ohmy').value);
+    }
+
+    const res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opencode: globalConfig.opencode, ohMy: globalConfig.ohMy })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message);
+      await loadConfig();
+    } else {
+      showToast(data.error, true);
+    }
+  } catch (err) {
+    showToast('Gagal menyimpan: ' + err.message, true);
+  }
+}
+
+function renderRawJson() {
+  if (!globalConfig) return;
+  document.getElementById('raw-opencode').value = JSON.stringify(globalConfig.opencode, null, 2);
+  document.getElementById('raw-ohmy').value = JSON.stringify(globalConfig.ohMy, null, 2);
+}
+
+function renderBackups() {
+  const list = document.getElementById('backup-list');
+  if (!globalConfig || !globalConfig.backups || globalConfig.backups.length === 0) {
+    list.innerHTML = '<p class="text-xs text-slate-500 italic">Belum ada file backup.</p>';
+    return;
+  }
+  list.innerHTML = globalConfig.backups.map(b => `
+    <div class="p-2.5 rounded-lg bg-dark-900 border border-slate-700/50 flex items-center justify-between">
+      <div class="truncate mr-2">
+        <p class="text-xs font-mono text-slate-200 truncate" title="${b.name}">${b.name}</p>
+        <p class="text-[10px] text-slate-400">${new Date(b.time).toLocaleString()} (${Math.round(b.size / 1024)} KB)</p>
+      </div>
+      <button onclick="restoreBackup('${b.name}')" class="px-2.5 py-1 rounded bg-slate-700 hover:bg-amber-600 text-white text-xs font-medium transition">Restore</button>
+    </div>
+  `).join('');
+}
+
+async function restoreBackup(fileName) {
+  if (!confirm(`Restore konfigurasi dari "${fileName}"? File saat ini akan otomatis dibackup.`)) return;
+  try {
+    const res = await fetch('/api/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ backupFileName })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message);
+      await loadConfig();
+    } else {
+      showToast(data.error, true);
+    }
+  } catch (err) {
+    showToast('Gagal restore: ' + err.message, true);
+  }
+}
+
+loadConfig(); setTab('quick'); document.addEventListener('DOMContentLoaded', () => {
+  loadConfig();
+  setTab('quick');
+});
+</script>
+</body>
+</html>

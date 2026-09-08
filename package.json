@@ -1,0 +1,21 @@
+{
+  "name": "opencode-manager",
+  "version": "1.0.0",
+  "description": "Lightweight Model & Router Switcher for OpenCode & Oh-My-OpenCode-Slim",
+  "main": "server.js",
+  "bin": {
+    "opencode-manager": "./cli.js"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "cli": "node cli.js"
+  },
+  "keywords": [
+    "opencode",
+    "oh-my-opencode-slim",
+    "ai-router",
+    "llm-switcher"
+  ],
+  "author": "naelvi-02",
+  "license": "MIT"
+}
