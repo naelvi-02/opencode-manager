@@ -40,6 +40,28 @@ function readJson(filePath, fallback = {}) {
 }
 
 function writeJson(filePath, data) {
+  if (data && data.provider) {
+    for (const provKey of Object.keys(data.provider)) {
+      const prov = data.provider[provKey];
+      if (prov && prov.models) {
+        for (const mKey of Object.keys(prov.models)) {
+          const m = prov.models[mKey];
+          if (m) {
+            const hasImage = m.modalities && Array.isArray(m.modalities.input) && m.modalities.input.includes('image');
+            const isVisionName = /gemini|gpt-5|vision|flash|kimi|muse|grok|minimax|4o|luna|sol/i.test(mKey) || /gemini|gpt-5|vision|flash|kimi|muse|grok|minimax|4o|luna|sol/i.test(m.name || '');
+            if (hasImage || isVisionName) {
+              m.attachment = true;
+              if (!m.modalities) {
+                m.modalities = { input: ["text", "image"], output: ["text"] };
+              } else if (!m.modalities.input.includes('image')) {
+                m.modalities.input.push('image');
+              }
+            }
+          }
+        }
+      }
+    }
+  }
   backupFile(filePath);
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
 }

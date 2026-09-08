@@ -485,6 +485,22 @@ async function saveAll() {
       globalConfig.ohMy = JSON.parse(document.getElementById('raw-ohmy').value);
     }
 
+        if (globalConfig.opencode && globalConfig.opencode.provider) {
+      for (const prov of Object.values(globalConfig.opencode.provider)) {
+        if (prov && prov.models) {
+          for (const [mKey, mVal] of Object.entries(prov.models)) {
+            if (mVal) {
+              const isVision = /gemini|gpt-5|vision|flash|kimi|muse|grok|minimax|4o|luna|sol/i.test(mKey) || (mVal.modalities && mVal.modalities.input && mVal.modalities.input.includes('image'));
+              if (isVision) {
+                mVal.attachment = true;
+                if (!mVal.modalities) mVal.modalities = { input: ['text', 'image'], output: ['text'] };
+                else if (!mVal.modalities.input.includes('image')) mVal.modalities.input.push('image');
+              }
+            }
+          }
+        }
+      }
+    }
     const res = await fetch('/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
